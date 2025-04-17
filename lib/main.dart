@@ -13,22 +13,36 @@ import '../memoissuer/memo.dart';
 import '../User_authentication/profile.dart';
 import '../mainrelated/network.dart';
 import 'package:memo4/welcome.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+/// Background handler
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print("🔙 Background message: ${message.notification?.title}");
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   if (kIsWeb) {
     await Firebase.initializeApp(
       options: FirebaseOptions(
-          apiKey: "AIzaSyDS8srYC86pg9R5cvQAgluKf5dHJ2DdWqo",
-          authDomain: "memo4-a7d0c.firebaseapp.com",
-          projectId: "memo4-a7d0c",
-          storageBucket: "memo4-a7d0c.firebasestorage.app",
-          messagingSenderId: "667241246281",
-          appId: "1:667241246281:web:d8867bc6f181148f9b9998",
-          measurementId: "G-QRS76FTH6X"),
+        apiKey: "AIzaSyDS8srYC86pg9R5cvQAgluKf5dHJ2DdWqo",
+        authDomain: "memo4-a7d0c.firebaseapp.com",
+        projectId: "memo4-a7d0c",
+        storageBucket: "memo4-a7d0c.firebasestorage.app",
+        messagingSenderId: "667241246281",
+        appId: "1:667241246281:web:d8867bc6f181148f9b9998",
+        measurementId: "G-QRS76FTH6X",
+      ),
     );
   } else {
     await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   }
 
   final prefs = await SharedPreferences.getInstance();
@@ -37,7 +51,7 @@ void main() async {
 
   String initialRoute;
   if (!isLoggedIn) {
-    initialRoute = '/welcome'; // Go to welcome page first
+    initialRoute = '/welcome';
   } else {
     switch (userType) {
       case 'Ward Staff Nurse':
@@ -109,11 +123,68 @@ void showToast(String message) {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final String initialRoute;
   final String userType;
 
   MyApp({required this.initialRoute, required this.userType});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    initNotifications();
+  }
+
+  Future<void> initNotifications() async {
+    final FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    await messaging.requestPermission();
+    final token = await messaging.getToken();
+    print("📱 FCM Token: $token");
+
+    // Foreground notification listener
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print("📩 Foreground message: ${message.notification?.title}");
+
+      RemoteNotification? notification = message.notification;
+      AndroidNotification? android = message.notification?.android;
+
+      if (notification != null && android != null) {
+        flutterLocalNotificationsPlugin.show(
+          notification.hashCode,
+          notification.title,
+          notification.body,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              'default_channel',
+              'Default',
+              importance: Importance.high,
+              priority: Priority.high,
+              icon: '@mipmap/ic_launcher',
+            ),
+          ),
+        );
+      }
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('📬 App opened from notification: ${message.notification?.title}');
+      // Optionally navigate based on message.data['route']
+    });
+
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    final InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,18 +192,15 @@ class MyApp extends StatelessWidget {
       title: 'MemoTrack',
       debugShowCheckedModeBanner: false,
       theme: appTheme(),
-      initialRoute: initialRoute,
+      initialRoute: widget.initialRoute,
       builder: (context, child) {
         return Stack(
-          children: [
-            child!,
-            NetworkStatus(child: child) // Persistent offline/online indicator
-          ],
+          children: [child!, NetworkStatus(child: child!)],
         );
       },
       routes: {
-        '/welcome': (context) => WelcomePage(), // Welcome page route
-        '/login': (context) => LoginPage(), // Login page route
+        '/welcome': (context) => WelcomePage(),
+        '/login': (context) => LoginPage(),
         '/register': (context) => RegisterPage(),
         '/memo': (context) => RoleBasedAuthWrapper(
               child: MemoPage(),

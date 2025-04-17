@@ -4,6 +4,21 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../User_authentication/login.dart';
+import 'package:memo4/user_types.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+Future<void> unsubscribeFromWorkerTypeTopic() async {
+  final prefs = await SharedPreferences.getInstance();
+  final userType = prefs.getString('userType');
+  if (userType != null) {
+    final topic = UserTypes.userTypeMapping[userType];
+    if (topic != null) {
+      await FirebaseMessaging.instance.unsubscribeFromTopic(topic);
+    }
+  }
+  // Clear session
+  await prefs.clear();
+}
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -104,6 +119,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () async {
+                unsubscribeFromWorkerTypeTopic();
                 await prefs.clear();
                 Fluttertoast.showToast(
                   msg: "Logged out successfully!",

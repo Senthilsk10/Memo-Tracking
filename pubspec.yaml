@@ -14,7 +14,6 @@ dependencies:
   animated_text_kit: ^4.2.2
   cloud_firestore: ^5.5.0
   firebase_core: ^3.8.0
-  cloud_functions: ^4.4.1
   intl: ^0.19.0
   open_file: ^3.5.10
   path_provider: ^2.1.4

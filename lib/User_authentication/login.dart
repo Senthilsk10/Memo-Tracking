@@ -48,9 +48,11 @@ class _LoginPageState extends State<LoginPage> {
     await prefs.setString('mobile', mobile);
   }
 
-  void _subscribeToWorkerTypeTopic(String workerType) {
-    final topic = workerType;
-    FirebaseMessaging.instance.subscribeToTopic(topic);
+  void _subscribeToWorkerTypeTopic(String userType) {
+    final topic = UserTypes.userTypeMapping[userType];
+    if (topic != null) {
+      FirebaseMessaging.instance.subscribeToTopic(topic);
+    }
   }
 
   // Function to show toast message

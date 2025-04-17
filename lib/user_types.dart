@@ -46,4 +46,22 @@ class UserTypes {
     'Responder - Laundry',
     'Responder - Manifold',
   ];
+  static const Map<String, String> userTypeMapping = {
+    'Ward Staff Nurse': 'ward_nurse',
+    'Approvers - Ward Incharge': 'ward_incharge',
+    'Approvers - Nursing Superintendent': 'nursing_superintendent',
+    'Approvers - RMO (Resident Medical Officer)': 'rmo',
+    'Approvers - Medical Superintendent (MS)': 'medical_superintendent',
+    'Approvers - Dean': 'dean',
+    'Responder - Carpenter': 'carpenter',
+    'Responder - Plumber': 'plumber',
+    'Responder - Housekeeping Supervisor': 'housekeeping',
+    'Responder - Biomedical Engineer': 'biomedical',
+    'Responder - Civil': 'civil',
+    'Responder - PWD Electrician': 'pwd_electrician',
+    'Responder - Hospital Electrician': 'hospital_electrician',
+    'Responder - Laundry': 'laundry',
+    'Responder - Manifold': 'manifold',
+    'Admin': 'admin',
+  };
 }

@@ -7,6 +7,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import '../User_authentication/profile.dart';
 import 'memoHistory.dart';
 import 'memo_update_delete.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class MemoPage extends StatefulWidget {
   @override
@@ -91,6 +93,18 @@ class _MemoPageState extends State<MemoPage> {
           final newMemoDocRef =
               FirebaseFirestore.instance.collection('memo').doc();
           transaction.set(newMemoDocRef, memoData);
+
+          final topic = UserTypes.userTypeMapping[_workerType]!;
+          await http.post(
+            Uri.parse(
+                'https://senthil1803.pythonanywhere.com/send_notification'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'topic': topic,
+              'title': 'New Memo Assigned',
+              'body': 'Memo ID $newMemoId has been created for $_workerType',
+            }),
+          );
         });
 
         // Toast message for successful submission
