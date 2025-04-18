@@ -1,0 +1,34 @@
+name: Build Android Universal APK
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0' # or your Flutter version
+
+    - name: Install dependencies
+      run: flutter pub get
+
+    - name: Build Universal APK
+      run: flutter build apk --release --target-platform android-arm,android-arm64,android-x64
+
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: universal-apk
+        path: build/app/outputs/flutter-apk/app-release.apk
