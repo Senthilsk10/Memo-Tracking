@@ -49,7 +49,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _subscribeToWorkerTypeTopic(String userType) {
-    final topic = UserTypes.userTypeMapping[userType];
+    String? topic = UserTypes.getWorkerTypeFromUserType(userType);
     if (topic != null) {
       FirebaseMessaging.instance.subscribeToTopic(topic);
     }
@@ -113,7 +113,7 @@ class _LoginPageState extends State<LoginPage> {
 
         // Save session data
         await _saveUserSession(institutionalId, userType, mobile);
-        // _subscribeToWorkerTypeTopic(userType);
+        _subscribeToWorkerTypeTopic(userType);
         // Show login success toast
         _showToast('Logged in successfully as $userType');
 

@@ -11,7 +11,7 @@ Future<void> unsubscribeFromWorkerTypeTopic() async {
   final prefs = await SharedPreferences.getInstance();
   final userType = prefs.getString('userType');
   if (userType != null) {
-    final topic = UserTypes.userTypeMapping[userType];
+    final topic = UserTypes.getNotificationTopic(userType);
     if (topic != null) {
       await FirebaseMessaging.instance.unsubscribeFromTopic(topic);
     }

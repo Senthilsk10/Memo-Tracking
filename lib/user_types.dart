@@ -27,7 +27,7 @@ class UserTypes {
     'Hospital Electrician',
     'Laundry',
     'Manifold',
-  ];
+  ]; //use this as the mapping types for the topics notification
   static const List<String> approvers = [
     'Approvers - Ward Incharge',
     'Approvers - Nursing Superintendent',
@@ -46,22 +46,26 @@ class UserTypes {
     'Responder - Laundry',
     'Responder - Manifold',
   ];
-  static const Map<String, String> userTypeMapping = {
-    'Ward Staff Nurse': 'ward_nurse',
-    'Approvers - Ward Incharge': 'ward_incharge',
-    'Approvers - Nursing Superintendent': 'nursing_superintendent',
-    'Approvers - RMO (Resident Medical Officer)': 'rmo',
-    'Approvers - Medical Superintendent (MS)': 'medical_superintendent',
-    'Approvers - Dean': 'dean',
-    'Responder - Carpenter': 'carpenter',
-    'Responder - Plumber': 'plumber',
-    'Responder - Housekeeping Supervisor': 'housekeeping',
-    'Responder - Biomedical Engineer': 'biomedical',
-    'Responder - Civil': 'civil',
-    'Responder - PWD Electrician': 'pwd_electrician',
-    'Responder - Hospital Electrician': 'hospital_electrician',
-    'Responder - Laundry': 'laundry',
-    'Responder - Manifold': 'manifold',
-    'Admin': 'admin',
-  };
+
+  /// Map from usertype to workertype
+  static String? getWorkerTypeFromUserType(String userType) {
+    if (userType.startsWith('Responder - ')) {
+      return userType.replaceFirst('Responder - ', '');
+    }
+    return null; // Not a responder
+  }
+
+  /// Map from workertype to usertype
+  static String? getUserTypeFromWorkerType(String workerType) {
+    String responderType = 'Responder - $workerType';
+    return responders.contains(responderType) ? responderType : null;
+  }
+
+  /// Get topic for notification subscription
+  static String? getNotificationTopic(String userType) {
+    String? workerType = getWorkerTypeFromUserType(userType);
+    return workerType != null
+        ? workerType.toLowerCase().replaceAll(' ', '_')
+        : null;
+  }
 }

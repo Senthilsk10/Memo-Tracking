@@ -56,7 +56,8 @@ class _MemoPageState extends State<MemoPage> {
       _formKey.currentState!.save();
 
       try {
-        await FirebaseFirestore.instance.runTransaction((transaction) async {
+        int newMemoId = await FirebaseFirestore.instance
+            .runTransaction((transaction) async {
           final counterDocRef =
               FirebaseFirestore.instance.collection('memo').doc('counter');
           final counterSnapshot = await transaction.get(counterDocRef);
@@ -94,18 +95,52 @@ class _MemoPageState extends State<MemoPage> {
               FirebaseFirestore.instance.collection('memo').doc();
           transaction.set(newMemoDocRef, memoData);
 
-          final topic = UserTypes.userTypeMapping[_workerType]!;
-          await http.post(
-            Uri.parse(
-                'https://senthil1803.pythonanywhere.com/send_notification'),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'topic': topic,
-              'title': 'New Memo Assigned',
-              'body': 'Memo ID $newMemoId has been created for $_workerType',
-            }),
-          );
+          return newMemoId;
         });
+
+        // Check if worker type exists in mapping before sending notification
+        if (_workerType != null) {
+          String? userType = UserTypes.getUserTypeFromWorkerType(_workerType!);
+
+          if (userType != null) {
+            String? topic = UserTypes.getNotificationTopic(userType);
+
+            if (topic != null) {
+              print(
+                  "Sending notification to topic: $topic for memo ID: $newMemoId");
+
+              try {
+                final response = await http.post(
+                  Uri.parse(
+                      'https://senthil1803.pythonanywhere.com/send_notification'),
+                  headers: {'Content-Type': 'application/json'},
+                  body: jsonEncode({
+                    'topic': topic,
+                    'title': 'New Memo Assigned',
+                    'body':
+                        'Memo ID $newMemoId has been created for $_workerType',
+                  }),
+                );
+
+                print("Notification response status: ${response.statusCode}");
+                print("Notification response body: ${response.body}");
+
+                if (response.statusCode != 200) {
+                  print(
+                      "Warning: Notification might not have been sent properly");
+                }
+              } catch (notificationError) {
+                print("Error sending notification: $notificationError");
+              }
+            } else {
+              print(
+                  "Warning: Topic could not be derived from userType: $userType");
+            }
+          } else {
+            print(
+                "Warning: Cannot derive userType from workerType: $_workerType");
+          }
+        }
 
         // Toast message for successful submission
         Fluttertoast.showToast(
@@ -117,16 +152,16 @@ class _MemoPageState extends State<MemoPage> {
           fontSize: 16.0,
         );
 
-        // Notify all workers
-
+        // Reset form after successful submission
         _formKey.currentState?.reset();
         setState(() {
           _workerType = null;
         });
       } catch (e) {
         // Toast message for error
+        print("Error submitting memo: $e");
         Fluttertoast.showToast(
-          msg: 'Error submitting memo: $e',
+          msg: 'Error submitting memo: ${e.toString()}',
           toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
           backgroundColor: Colors.red,
